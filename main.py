@@ -1,3 +1,4 @@
+from random import randint
 from typing import List
 import sys
 
@@ -29,7 +30,7 @@ class Game:
 
     def setup(self):
         pygame.init()
-        pygame.display.set_caption('Conway\'s Game of Life')
+        pygame.display.set_caption("Conway's Game of Life")
         self.window = pygame.display.set_mode((self.width * self.BLOCK_SIZE, self.height * self.BLOCK_SIZE))
         self.clock = pygame.time.Clock()
         self.time_elapsed_since_last_action = 0
@@ -54,13 +55,22 @@ class Game:
         for x, y in set(cells):
             self.grid[y][x].state = Cell.ALIVE
 
+    def gen(self):
+        self.seed([(randint(0, self.width - 1), randint(0, self.height - 1))
+                    for _ in range(self.width) for _ in range(self.height)])
+
     def step(self):
-        self.calculate_next_state()
-        self.update_state()
-            
-    def calculate_next_state(self):
-        for y, _ in enumerate(self.grid):
-            for x, _ in enumerate(self.grid[y]):
+        self._calculate_next_state()
+        self._update_state()
+
+    def reset(self):
+        for y in range(self.height):
+            for x in range(self.width):
+                self.grid[y][x].state = Cell.DEAD
+
+    def _calculate_next_state(self):
+        for y in range(self.height):
+            for x in range(self.width):
                 neighbor_count = 0
 
                 if y - 1 >= 0 and x - 1 >= 0 and self.grid[y-1][x-1].state == Cell.ALIVE:
@@ -89,9 +99,9 @@ class Game:
                 if self.grid[y][x].state == Cell.DEAD and neighbor_count == 3:
                     self.grid[y][x].next_state = Cell.ALIVE
 
-    def update_state(self):
-        for y, _ in enumerate(self.grid):
-            for x, _ in enumerate(self.grid[y]):
+    def _update_state(self):
+        for y in range(self.height):
+            for x in range(self.width):
                 self.grid[y][x].state = self.grid[y][x].next_state
 
     def print(self):
@@ -101,8 +111,8 @@ class Game:
 if __name__ == '__main__':
     game = Game(50, 50)
     game.setup()
-    from random import randint
-    game.seed([(randint(0, 49), randint(0, 49)) for _ in range(50) for _ in range(50)])
+    game.gen()
+
     while True:
         game.render()
         game.step()
@@ -110,3 +120,7 @@ if __name__ == '__main__':
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    game.reset()
+                    game.gen()
